@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <style>
+      body {
+        width: 300px;
+        padding: 20px;
+        font-family: Arial, sans-serif;
+      }
+      .header {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .logo {
+        font-size: 18px;
+        font-weight: bold;
+        color: #e535ab;
+      }
+      .section {
+        margin-bottom: 15px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+      input[type="text"] {
+        width: 100%;
+        padding: 5px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        box-sizing: border-box;
+      }
+      button {
+        background-color: #e535ab;
+        color: white;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+        margin-right: 10px;
+      }
+      button:hover {
+        background-color: #d12d9c;
+      }
+      .status {
+        margin-top: 10px;
+        padding: 8px;
+        border-radius: 3px;
+        text-align: center;
+      }
+      .status.success {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      .status.error {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="logo">GraphQL Inspector</div>
+      <div>Highlight GraphQL Requests</div>
+    </div>
+    
+    <div class="section">
+      <label for="searchKeys">Search Keys (comma-separated):</label>
+      <input type="text" id="searchKeys" placeholder="e.g., query, mutation, subscription">
+    </div>
+    
+    <div class="section">
+      <button id="saveBtn">Save Settings</button>
+      <button id="clearBtn">Clear</button>
+    </div>
+    
+    <div class="section">
+      <button id="openDevtools">Open DevTools</button>
+    </div>
+    
+    <div id="status" class="status" style="display: none;"></div>
+    
+    <script src="popup.js"></script>
+  </body>
+</html>
