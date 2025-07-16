@@ -24,59 +24,59 @@ let networkLogEntries = [];
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('GraphQL Inspector panel loaded and ready');
-    
-    // Event listeners
-    clearBtn.addEventListener('click', clearRequests);
-    refreshBtn.addEventListener('click', refreshRequests);
-    testBtn.addEventListener('click', injectTestData);
-    urlFilter.addEventListener('input', filterRequests);
-    statusFilter.addEventListener('change', filterRequests);
-    closeDetailsBtn.addEventListener('click', closeDetails);
-    clearLogsBtn.addEventListener('click', clearNetworkLogs);
-    
-    // Initialize network logs
-    updateNetworkLogs();
-    
-    // Initialize display
-    updateDisplay();
-    
-    // Try to load existing requests from devtools global function
-    if (window.getGraphQLRequests) {
-        currentRequests = window.getGraphQLRequests();
-        filterRequests();
-    }
+  console.log('GraphQL Inspector panel loaded and ready');
+  
+  // Event listeners
+  clearBtn.addEventListener('click', clearRequests);
+  refreshBtn.addEventListener('click', refreshRequests);
+  testBtn.addEventListener('click', injectTestData);
+  urlFilter.addEventListener('input', filterRequests);
+  statusFilter.addEventListener('change', filterRequests);
+  closeDetailsBtn.addEventListener('click', closeDetails);
+  clearLogsBtn.addEventListener('click', clearNetworkLogs);
+  
+  // Initialize network logs
+  updateNetworkLogs();
+  
+  // Initialize display
+  updateDisplay();
+  
+  // Try to load existing requests from devtools global function
+  if (window.getGraphQLRequests) {
+    currentRequests = window.getGraphQLRequests();
+    filterRequests();
+  }
 });
 
 // Function to update requests (called from devtools.js)
 window.updateRequests = function(requests) {
-    currentRequests = requests;
-    filterRequests();
+  currentRequests = requests;
+  filterRequests();
 };
 
 // Filter requests based on current filter settings
 function filterRequests() {
-    const urlFilterValue = urlFilter.value.toLowerCase();
-    const statusFilterValue = statusFilter.value;
+  const urlFilterValue = urlFilter.value.toLowerCase();
+  const statusFilterValue = statusFilter.value;
+  
+  filteredRequests = currentRequests.filter(request => {
+    // URL filter
+    if (urlFilterValue && !request.url.toLowerCase().includes(urlFilterValue)) {
+      return false;
+    }
     
-    filteredRequests = currentRequests.filter(request => {
-      // URL filter
-      if (urlFilterValue && !request.url.toLowerCase().includes(urlFilterValue)) {
+    // Status filter
+    if (statusFilterValue) {
+      const statusGroup = Math.floor(request.status / 100);
+      if (statusGroup.toString() !== statusFilterValue) {
         return false;
       }
-      
-      // Status filter
-      if (statusFilterValue) {
-        const statusGroup = Math.floor(request.status / 100);
-        if (statusGroup.toString() !== statusFilterValue) {
-          return false;
-        }
-      }
-      
-      return true;
-    });
+    }
     
-    updateDisplay();
+    return true;
+  });
+  
+  updateDisplay();
 }
 
 // Update the display
@@ -188,262 +188,262 @@ function generateRequestDetailsHTML(request) {
   const responseBody = formatJSON(request.responseBody);
   
   return `
-      <div class="section-title">Request Information</div>
-      <div class="code-block">
-          <strong>URL:</strong> ${request.url}<br>
-          <strong>Method:</strong> ${request.method}<br>
-          <strong>Status:</strong> ${request.status} ${request.statusText}<br>
-          <strong>Time:</strong> ${new Date(request.time).toLocaleString()}<br>
-          <strong>Duration:</strong> ${Math.round(request.duration)}ms
-      </div>
-      
-      <div class="section-title">Request Headers</div>
-      <div class="code-block">
-          ${formatHeaders(request.requestHeaders)}
-      </div>
-      
-      <div class="section-title">Request Body</div>
-      <div class="code-block">
-          ${requestBody}
-      </div>
-      
-      <div class="section-title">Response Headers</div>
-      <div class="code-block">
-          ${formatHeaders(request.responseHeaders)}
-      </div>
-      
-      <div class="section-title">Response Body</div>
-      <div class="code-block">
-          ${responseBody}
-      </div>
+    <div class="section-title">Request Information</div>
+    <div class="code-block">
+      <strong>URL:</strong> ${request.url}<br>
+      <strong>Method:</strong> ${request.method}<br>
+      <strong>Status:</strong> ${request.status} ${request.statusText}<br>
+      <strong>Time:</strong> ${new Date(request.time).toLocaleString()}<br>
+      <strong>Duration:</strong> ${Math.round(request.duration)}ms
+    </div>
+    
+    <div class="section-title">Request Headers</div>
+    <div class="code-block">
+      ${formatHeaders(request.requestHeaders)}
+    </div>
+    
+    <div class="section-title">Request Body</div>
+    <div class="code-block">
+      ${requestBody}
+    </div>
+    
+    <div class="section-title">Response Headers</div>
+    <div class="code-block">
+      ${formatHeaders(request.responseHeaders)}
+    </div>
+    
+    <div class="section-title">Response Body</div>
+    <div class="code-block">
+      ${responseBody}
+    </div>
   `;
 }
 
 // Format JSON for display
 function formatJSON(jsonString) {
-    if (!jsonString) return 'No content';
-    
-    try {
-        const parsed = JSON.parse(jsonString);
-        return JSON.stringify(parsed, null, 2);
-    } catch (e) {
-        return jsonString;
-    }
+  if (!jsonString) return 'No content';
+  
+  try {
+    const parsed = JSON.parse(jsonString);
+    return JSON.stringify(parsed, null, 2);
+  } catch (e) {
+    return jsonString;
+  }
 }
 
 // Format headers for display
 function formatHeaders(headers) {
-    if (!headers || !Array.isArray(headers)) return 'No headers';
-    
-    return headers.map(header => `${header.name}: ${header.value}`).join('<br>');
+  if (!headers || !Array.isArray(headers)) return 'No headers';
+  
+  return headers.map(header => `${header.name}: ${header.value}`).join('<br>');
 }
 
 // Close details panel
 function closeDetails() {
-    detailsPanel.style.display = 'none';
-    requestsContainer.style.width = '100%';
-    selectedRequest = null;
-    
-    // Remove selection from both request items and network entries
-    document.querySelectorAll('.request-item').forEach(item => {
-        item.classList.remove('selected');
-    });
-    document.querySelectorAll('.network-entry').forEach(item => {
-        item.classList.remove('selected');
-    });
+  detailsPanel.style.display = 'none';
+  requestsContainer.style.width = '100%';
+  selectedRequest = null;
+  
+  // Remove selection from both request items and network entries
+  document.querySelectorAll('.request-item').forEach(item => {
+    item.classList.remove('selected');
+  });
+  document.querySelectorAll('.network-entry').forEach(item => {
+    item.classList.remove('selected');
+  });
 }
 
 // Clear all requests
 function clearRequests() {
-    // Clear local requests immediately
-    currentRequests = [];
-    filteredRequests = [];
-    updateDisplay();
-    closeDetails();
-    
-    // Call the global function provided by devtools
-    if (window.clearGraphQLRequests) {
-        window.clearGraphQLRequests();
-    }
+  // Clear local requests immediately
+  currentRequests = [];
+  filteredRequests = [];
+  updateDisplay();
+  closeDetails();
+  
+  // Call the global function provided by devtools
+  if (window.clearGraphQLRequests) {
+    window.clearGraphQLRequests();
+  }
 }
 
 // Refresh requests
 function refreshRequests() {
-    // Call the global function provided by devtools
-    if (window.refreshGraphQLRequests) {
-        window.refreshGraphQLRequests();
-    }
+  // Call the global function provided by devtools
+  if (window.refreshGraphQLRequests) {
+    window.refreshGraphQLRequests();
+  }
 }
 
 // Inject test data
 function injectTestData() {
-    console.log('Injecting test data from panel...');
+  console.log('Injecting test data from panel...');
+  
+  // Call the global function provided by devtools, but avoid recursion
+  if (window.injectTestData && window.injectTestData !== injectTestData) {
+    window.injectTestData();
+  } else {
+    // Fallback: create test data directly
+    const testRequest = {
+      id: Date.now() + Math.random(),
+      url: 'https://example.com/graphql',
+      method: 'POST',
+      status: 200,
+      statusText: 'OK',
+      time: new Date().toISOString(),
+      duration: 150,
+      requestBody: '{"query":"query { user { id name } }","variables":{}}',
+      requestHeaders: [
+        { name: 'Content-Type', value: 'application/json' },
+        { name: 'Authorization', value: 'Bearer token123' }
+      ],
+      responseHeaders: [
+        { name: 'Content-Type', value: 'application/json' }
+      ],
+      responseBody: '{"data":{"user":{"id":"1","name":"Test User"}}}',
+      encoding: 'utf8',
+      operationType: 'Query'
+    };
     
-    // Call the global function provided by devtools, but avoid recursion
-    if (window.injectTestData && window.injectTestData !== injectTestData) {
-        window.injectTestData();
-    } else {
-        // Fallback: create test data directly
-        const testRequest = {
-            id: Date.now() + Math.random(),
-            url: 'https://example.com/graphql',
-            method: 'POST',
-            status: 200,
-            statusText: 'OK',
-            time: new Date().toISOString(),
-            duration: 150,
-            requestBody: '{"query":"query { user { id name } }","variables":{}}',
-            requestHeaders: [
-                { name: 'Content-Type', value: 'application/json' },
-                { name: 'Authorization', value: 'Bearer token123' }
-            ],
-            responseHeaders: [
-                { name: 'Content-Type', value: 'application/json' }
-            ],
-            responseBody: '{"data":{"user":{"id":"1","name":"Test User"}}}',
-            encoding: 'utf8',
-            operationType: 'Query'
-        };
-        
-        currentRequests.push(testRequest);
-        filterRequests();
-    }
+    currentRequests.push(testRequest);
+    filterRequests();
+  }
 }
 
 // Network logging functions
 function addNetworkEntry(networkData) {
-    const networkEntry = {
-        id: Date.now() + Math.random(),
-        url: networkData.url || 'Unknown URL',
-        method: networkData.method || 'GET',
-        status: networkData.status || 200,
-        statusText: networkData.statusText || 'OK',
-        time: networkData.time || new Date().toISOString(),
-        duration: networkData.duration || 0,
-        requestBody: networkData.requestBody || '',
-        requestHeaders: networkData.requestHeaders || [],
-        responseHeaders: networkData.responseHeaders || [],
-        responseBody: networkData.responseBody || '',
-        type: networkData.type || 'Network',
-        operationType: networkData.operationType || ''
-    };
+  const networkEntry = {
+    id: Date.now() + Math.random(),
+    url: networkData.url || 'Unknown URL',
+    method: networkData.method || 'GET',
+    status: networkData.status || 200,
+    statusText: networkData.statusText || 'OK',
+    time: networkData.time || new Date().toISOString(),
+    duration: networkData.duration || 0,
+    requestBody: networkData.requestBody || '',
+    requestHeaders: networkData.requestHeaders || [],
+    responseHeaders: networkData.responseHeaders || [],
+    responseBody: networkData.responseBody || '',
+    type: networkData.type || 'Network',
+    operationType: networkData.operationType || ''
+  };
     
-    networkLogEntries.push(networkEntry);
+  networkLogEntries.push(networkEntry);
+  
+  // Keep only last 50 network entries
+  if (networkLogEntries.length > 50) {
+    networkLogEntries.shift();
+  }
     
-    // Keep only last 50 network entries
-    if (networkLogEntries.length > 50) {
-        networkLogEntries.shift();
-    }
-    
-    updateNetworkLogs();
+  updateNetworkLogs();
 }
 
 function updateNetworkLogs() {
-    if (!networkLogs) return;
+  if (!networkLogs) return;
+  
+  networkLogs.innerHTML = '';
+  
+  // Filter to show only GraphQL requests
+  const graphqlNetworkEntries = networkLogEntries.filter(entry => entry.type === 'GraphQL');
+  
+  if (graphqlNetworkEntries.length === 0) {
+    networkLogs.innerHTML = `
+      <div class="network-entry">
+        <div class="network-header">
+          <span class="network-method">POST</span>
+          <span class="network-url">Waiting for GraphQL requests...</span>
+          <span class="network-status status-success">--</span>
+        </div>
+        <div class="network-details">
+          <span>Time: --</span>
+          <span>Duration: --</span>
+          <span>Type: --</span>
+        </div>
+      </div>
+    `;
+    return;
+  }
+  
+  graphqlNetworkEntries.forEach(entry => {
+    const networkDiv = document.createElement('div');
+    networkDiv.className = 'network-entry';
+    networkDiv.onclick = () => toggleNetworkDetails(entry.id, networkDiv);
     
-    networkLogs.innerHTML = '';
+    const statusClass = entry.status >= 200 && entry.status < 300 ? 'status-success' : 'status-error';
+    const displayType = entry.operationType || entry.type;
     
-    // Filter to show only GraphQL requests
-    const graphqlNetworkEntries = networkLogEntries.filter(entry => entry.type === 'GraphQL');
+    networkDiv.innerHTML = `
+        <div class="network-header">
+          <span class="network-method">${entry.method}</span>
+          <span class="network-url">${entry.url}</span>
+          <span class="network-status ${statusClass}">${entry.status} ${entry.statusText}</span>
+        </div>
+        <div class="network-details">
+          <span>Time: ${new Date(entry.time).toLocaleTimeString()}</span>
+          <span>Duration: ${Math.round(entry.duration)}ms</span>
+          <span>Type: ${displayType}</span>
+        </div>
+    `;
     
-    if (graphqlNetworkEntries.length === 0) {
-        networkLogs.innerHTML = `
-            <div class="network-entry">
-                <div class="network-header">
-                    <span class="network-method">POST</span>
-                    <span class="network-url">Waiting for GraphQL requests...</span>
-                    <span class="network-status status-success">--</span>
-                </div>
-                <div class="network-details">
-                    <span>Time: --</span>
-                    <span>Duration: --</span>
-                    <span>Type: --</span>
-                </div>
-            </div>
-        `;
-        return;
-    }
-    
-    graphqlNetworkEntries.forEach(entry => {
-        const networkDiv = document.createElement('div');
-        networkDiv.className = 'network-entry';
-        networkDiv.onclick = () => toggleNetworkDetails(entry.id, networkDiv);
-        
-        const statusClass = entry.status >= 200 && entry.status < 300 ? 'status-success' : 'status-error';
-        const displayType = entry.operationType || entry.type;
-        
-        networkDiv.innerHTML = `
-            <div class="network-header">
-                <span class="network-method">${entry.method}</span>
-                <span class="network-url">${entry.url}</span>
-                <span class="network-status ${statusClass}">${entry.status} ${entry.statusText}</span>
-            </div>
-            <div class="network-details">
-                <span>Time: ${new Date(entry.time).toLocaleTimeString()}</span>
-                <span>Duration: ${Math.round(entry.duration)}ms</span>
-                <span>Type: ${displayType}</span>
-            </div>
-        `;
-        
-        networkLogs.appendChild(networkDiv);
-    });
-    
-    // Auto-scroll to bottom
-    networkLogs.scrollTop = networkLogs.scrollHeight;
+    networkLogs.appendChild(networkDiv);
+  });
+  
+  // Auto-scroll to bottom
+  networkLogs.scrollTop = networkLogs.scrollHeight;
 }
 
 function toggleNetworkDetails(entryId, networkDiv) {
-    const entry = networkLogEntries.find(e => e.id === entryId);
-    if (!entry) return;
+  const entry = networkLogEntries.find(e => e.id === entryId);
+  if (!entry) return;
+  
+  // Only show GraphQL requests in the details panel
+  if (entry.type === 'GraphQL') {
+    // Convert network entry to GraphQL request format for details panel
+    const graphqlRequest = {
+      id: entry.id,
+      url: entry.url,
+      method: entry.method,
+      status: entry.status,
+      statusText: entry.statusText,
+      time: entry.time,
+      duration: entry.duration,
+      requestBody: entry.requestBody,
+      requestHeaders: entry.requestHeaders,
+      responseHeaders: entry.responseHeaders,
+      responseBody: entry.responseBody,
+      operationType: entry.operationType
+    };
     
-    // Only show GraphQL requests in the details panel
-    if (entry.type === 'GraphQL') {
-        // Convert network entry to GraphQL request format for details panel
-        const graphqlRequest = {
-            id: entry.id,
-            url: entry.url,
-            method: entry.method,
-            status: entry.status,
-            statusText: entry.statusText,
-            time: entry.time,
-            duration: entry.duration,
-            requestBody: entry.requestBody,
-            requestHeaders: entry.requestHeaders,
-            responseHeaders: entry.responseHeaders,
-            responseBody: entry.responseBody,
-            operationType: entry.operationType
-        };
-        
-        showRequestDetails(graphqlRequest);
-        
-        // Update selection state for network entries
-        document.querySelectorAll('.network-entry').forEach(item => {
-            item.classList.remove('selected');
-        });
-        networkDiv.classList.add('selected');
-    }
+    showRequestDetails(graphqlRequest);
+    
+    // Update selection state for network entries
+    document.querySelectorAll('.network-entry').forEach(item => {
+      item.classList.remove('selected');
+    });
+    networkDiv.classList.add('selected');
+  }
 }
 
 function formatNetworkHeaders(headers) {
-    if (!headers || !Array.isArray(headers)) return 'No headers';
-    
-    return headers.map(header => `${header.name}: ${header.value}`).join('\n');
+  if (!headers || !Array.isArray(headers)) return 'No headers';
+  
+  return headers.map(header => `${header.name}: ${header.value}`).join('\n');
 }
 
 function formatNetworkJSON(jsonString) {
-    if (!jsonString) return 'No content';
-    
-    try {
-        const parsed = JSON.parse(jsonString);
-        return JSON.stringify(parsed, null, 2);
-    } catch (e) {
-        return jsonString;
-    }
+  if (!jsonString) return 'No content';
+  
+  try {
+    const parsed = JSON.parse(jsonString);
+    return JSON.stringify(parsed, null, 2);
+  } catch (e) {
+    return jsonString;
+  }
 }
 
 function clearNetworkLogs() {
-    networkLogEntries = [];
-    updateNetworkLogs();
+  networkLogEntries = [];
+  updateNetworkLogs();
 }
 
 // Function to be called from devtools.js to add network entries
@@ -451,23 +451,23 @@ window.addNetworkEntry = addNetworkEntry;
 
 // Function to add navigation events
 function addNavigationEntry(url) {
-    const navigationEntry = {
-        id: Date.now() + Math.random(),
-        url: url,
-        method: 'NAVIGATE',
-        status: 200,
-        statusText: 'Navigated',
-        time: new Date().toISOString(),
-        duration: 0,
-        requestBody: '',
-        requestHeaders: [],
-        responseHeaders: [],
-        responseBody: '',
-        type: 'Navigation',
-        operationType: 'Navigation'
-    };
-    
-    addNetworkEntry(navigationEntry);
+  const navigationEntry = {
+    id: Date.now() + Math.random(),
+    url: url,
+    method: 'NAVIGATE',
+    status: 200,
+    statusText: 'Navigated',
+    time: new Date().toISOString(),
+    duration: 0,
+    requestBody: '',
+    requestHeaders: [],
+    responseHeaders: [],
+    responseBody: '',
+    type: 'Navigation',
+    operationType: 'Navigation'
+  };
+  
+  addNetworkEntry(navigationEntry);
 }
 
 window.addNavigationEntry = addNavigationEntry;
