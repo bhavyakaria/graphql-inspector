@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GraphQL Inspector Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #e535ab;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #d12d9c;
+        }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .success {
+            color: #28a745;
+        }
+        .error {
+            color: #dc3545;
+        }
+        .info {
+            color: #17a2b8;
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 4px;
+        }
+        .instructions {
+            background-color: #e8f5e8;
+            border: 1px solid #c3e6c3;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .instructions ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .instructions li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>GraphQL Inspector Test Page</h1>
+        <div class="instructions">
+            <p><strong>Instructions:</strong></p>
+            <ol>
+                <li>Open DevTools (F12)</li>
+                <li>Go to the <strong>"GraphQL Inspector"</strong> tab</li>
+                <li>Click any button below to test GraphQL requests</li>
+                <li>Watch the requests appear in the GraphQL Inspector panel</li>
+            </ol>
+            <p class="info">💡 The requests will appear in the GraphQL Inspector tab even if they fail (404 errors are expected since /graphql endpoint doesn't exist)</p>
+        </div>
+        
+        <div>
+            <button id="testBtn">Send Test GraphQL Query</button>
+            <button id="mutationBtn">Send Test GraphQL Mutation</button>
+            <button id="subscriptionBtn">Send Test GraphQL Subscription</button>
+            <button id="multipleBtn">Send Multiple Requests</button>
+            <button onclick="clearLogs()" style="background: #f44336; margin-left: 20px;">🧹 Clear Logs</button>
+            <button id="clearBtn">Clear Log</button>
+        </div>
+        
+        <div class="log" id="logContainer">
+            <div class="info">Click any button above to test GraphQL requests...</div>
+        </div>
+    </div>
+    
+    <script>
+        let requestCounter = 0;
+        const logContainer = document.getElementById('logContainer');
+        
+        // Function to log messages
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        // Function to send GraphQL request
+        async function sendGraphQLRequest(query, variables = {}, operationName = null) {
+            requestCounter++;
+            const requestId = requestCounter;
+            
+            const requestBody = {
+                query: query,
+                variables: variables
+            };
+            
+            if (operationName) {
+                requestBody.operationName = operationName;
+            }
+            
+            log(`📤 Sending GraphQL request #${requestId}...`, 'info');
+            log(`🔍 Check DevTools → GraphQL Inspector tab for request details`, 'info');
+            
+            try {
+                const response = await fetch('/graphql', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-Request-ID': `test-${requestId}`,
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+                
+                log(`✅ Request #${requestId} sent to /graphql (Status: ${response.status})`, 'success');
+                log(`📊 Request should now appear in GraphQL Inspector panel`, 'success');
+                
+                // Try to read response (will likely fail since endpoint doesn't exist)
+                try {
+                    const responseText = await response.text();
+                    log(`📥 Response #${requestId}: ${responseText.substring(0, 100)}...`, 'info');
+                } catch (e) {
+                    log(`⚠️ Response #${requestId}: Could not read response body`, 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ Request #${requestId} failed: ${error.message}`, 'error');
+                log(`🔍 Request should still appear in GraphQL Inspector panel`, 'info');
+            }
+        }
+        
+        // Test GraphQL Query
+        document.getElementById('testBtn').addEventListener('click', function() {
+            const query = `
+                query GetUser($id: ID!) {
+                    user(id: $id) {
+                        id
+                        name
+                        email
+                        profile {
+                            avatar
+                            bio
+                        }
+                    }
+                }
+            `;
+            
+            sendGraphQLRequest(query, { id: "123" }, "GetUser");
+        });
+        
+        // Test GraphQL Mutation
+        document.getElementById('mutationBtn').addEventListener('click', function() {
+            const mutation = `
+                mutation UpdateUser($id: ID!, $input: UserInput!) {
+                    updateUser(id: $id, input: $input) {
+                        id
+                        name
+                        email
+                        updatedAt
+                    }
+                }
+            `;
+            
+            sendGraphQLRequest(mutation, { 
+                id: "123", 
+                input: { 
+                    name: "John Doe", 
+                    email: "john@example.com" 
+                } 
+            }, "UpdateUser");
+        });
+        
+        // Test GraphQL Subscription
+        document.getElementById('subscriptionBtn').addEventListener('click', function() {
+            const subscription = `
+                subscription OnUserUpdated($userId: ID!) {
+                    userUpdated(userId: $userId) {
+                        id
+                        name
+                        email
+                        lastSeen
+                    }
+                }
+            `;
+            
+            sendGraphQLRequest(subscription, { userId: "123" }, "OnUserUpdated");
+        });
+        
+        // Clear logs
+        function clearLogs() {
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML = '';
+            log('🧹 Logs cleared', 'info');
+        }
+        
+        // Send multiple requests
+        document.getElementById('multipleBtn').addEventListener('click', async function() {
+            log('Sending multiple GraphQL requests...', 'info');
+            
+            const queries = [
+                { query: 'query { users { id name } }', variables: {}, operationName: 'GetUsers' },
+                { query: 'query { posts { id title author } }', variables: {}, operationName: 'GetPosts' },
+                { query: 'mutation { createPost(input: { title: "Test" }) { id } }', variables: {}, operationName: 'CreatePost' }
+            ];
+            
+            for (const queryData of queries) {
+                await sendGraphQLRequest(queryData.query, queryData.variables, queryData.operationName);
+                await new Promise(resolve => setTimeout(resolve, 500)); // Small delay between requests
+            }
+        });
+        
+        // Clear log
+        document.getElementById('clearBtn').addEventListener('click', function() {
+            logContainer.innerHTML = '<div class="info">Log cleared...</div>';
+        });
+        
+        // Initialize
+        log('GraphQL Inspector Test Page loaded', 'success');
+        log('📋 Instructions: Open DevTools → Go to "GraphQL Inspector" tab → Click buttons to test', 'info');
+        log('🔧 DevTools Console will show detailed request processing logs', 'info');
+    </script>
+</body>
+</html>

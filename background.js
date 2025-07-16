@@ -23,26 +23,12 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     console.log('Updated search keys:', searchKeys);
     sendResponse({success: true});
   }
+  return true;
 });
 
-// Listen for tab updates to inject content script
-chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-  if (changeInfo.status === 'complete' && tab.url) {
-    // Inject content script into the page
-    chrome.scripting.executeScript({
-      target: { tabId: tabId },
-      files: ['content.js']
-    }).catch(err => {
-      // Ignore errors for pages where we can't inject scripts
-      console.log('Could not inject content script:', err);
-    });
-  }
-});
-
-// Handle web request monitoring (for future GraphQL detection)
+// Handle web request monitoring for GraphQL detection
 chrome.webRequest.onBeforeRequest.addListener(
   function(details) {
-    // This will be used later to detect GraphQL requests
     console.log('Request detected:', details.url);
     
     // Check if this might be a GraphQL request
@@ -53,18 +39,18 @@ chrome.webRequest.onBeforeRequest.addListener(
         
         // Basic check for GraphQL-like content
         if (bodyText.includes('query') || bodyText.includes('mutation') || bodyText.includes('subscription')) {
-            console.log('Potential GraphQL request detected:', details.url);
-            console.log('Request body:', bodyText);
+          console.log('Potential GraphQL request detected:', details.url);
+          console.log('Request body:', bodyText);
         }
       } catch (e) {
-          // Ignore decoding errors
+        // Ignore decoding errors
       }
     }
       
     return {};
   },
   {
-      urls: ["<all_urls>"]
+    urls: ["<all_urls>"]
   },
   ["requestBody"]
 );

@@ -1,80 +1,381 @@
 <!DOCTYPE html>
 <html>
   <head>
-      <meta charset="utf-8">
-      <style>
-          body {
-              font-family: Arial, sans-serif;
-              padding: 20px;
-              background-color: #f5f5f5;
-          }
-          .header {
-              text-align: center;
-              margin-bottom: 30px;
-          }
-          .logo {
-              font-size: 24px;
-              font-weight: bold;
-              color: #e535ab;
-              margin-bottom: 10px;
-          }
-          .subtitle {
-              color: #666;
-              font-size: 14px;
-          }
-          .content {
-              background-color: white;
-              padding: 20px;
-              border-radius: 5px;
-              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          }
-          .placeholder {
-              text-align: center;
-              color: #999;
-              font-style: italic;
-              margin: 40px 0;
-          }
-          .info-box {
-              background-color: #e8f4fd;
-              border: 1px solid #b6d7ff;
-              border-radius: 3px;
-              padding: 15px;
-              margin-bottom: 20px;
-          }
-          .info-box h3 {
-              margin: 0 0 10px 0;
-              color: #0366d6;
-          }
-          .info-box p {
-              margin: 5px 0;
-              color: #586069;
-          }
-      </style>
+    <meta charset="utf-8">
+    <style>
+      body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          margin: 0;
+          padding: 0;
+          background-color: #f8f9fa;
+          height: 100vh;
+          display: flex;
+          flex-direction: column;
+      }
+      .header {
+          background-color: #2d3748;
+          color: white;
+          padding: 12px 20px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-bottom: 1px solid #4a5568;
+      }
+      .logo {
+          font-size: 16px;
+          font-weight: 600;
+          color: #e535ab;
+      }
+      .controls {
+          display: flex;
+          gap: 10px;
+      }
+      .btn {
+          background-color: #e535ab;
+          color: white;
+          border: none;
+          padding: 6px 12px;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 12px;
+          font-weight: 500;
+      }
+      .btn:hover {
+          background-color: #d12d9c;
+      }
+      .btn-secondary {
+          background-color: #4a5568;
+      }
+      .btn-secondary:hover {
+          background-color: #2d3748;
+      }
+      .filters {
+          background-color: white;
+          padding: 12px 20px;
+          border-bottom: 1px solid #e2e8f0;
+          display: flex;
+          gap: 15px;
+          align-items: center;
+      }
+      .filter-group {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+      }
+      .filter-group label {
+          font-size: 12px;
+          font-weight: 500;
+          color: #4a5568;
+      }
+      .filter-input {
+          border: 1px solid #cbd5e0;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 12px;
+      }
+      .content {
+          flex: 1;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+      }
+      .requests-container {
+          flex: 1;
+          overflow-y: auto;
+          background-color: white;
+      }
+      .request-item {
+          border-bottom: 1px solid #e2e8f0;
+          padding: 12px 20px;
+          cursor: pointer;
+          transition: background-color 0.2s;
+      }
+      .request-item:hover {
+          background-color: #f7fafc;
+      }
+      .request-item.selected {
+          background-color: #ebf8ff;
+          border-left: 4px solid #e535ab;
+      }
+      .request-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 8px;
+      }
+      .request-method {
+          background-color: #e535ab;
+          color: white;
+          padding: 2px 8px;
+          border-radius: 4px;
+          font-size: 11px;
+          font-weight: 600;
+      }
+      .request-url {
+          font-size: 13px;
+          color: #2d3748;
+          font-weight: 500;
+          flex: 1;
+          margin-left: 10px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+      }
+      .request-status {
+          font-size: 12px;
+          font-weight: 500;
+      }
+      .status-success {
+          color: #38a169;
+      }
+      .status-error {
+          color: #e53e3e;
+      }
+      .request-details {
+          font-size: 12px;
+          color: #718096;
+          display: flex;
+          gap: 15px;
+      }
+      .empty-state {
+          text-align: center;
+          color: #718096;
+          padding: 40px;
+      }
+      .empty-state-icon {
+          font-size: 48px;
+          margin-bottom: 16px;
+      }
+      .details-panel {
+          display: none;
+          position: fixed;
+          top: 0;
+          right: 0;
+          width: 50%;
+          height: 100%;
+          background-color: white;
+          border-left: 1px solid #e2e8f0;
+          z-index: 1000;
+      }
+      .details-header {
+          background-color: #f7fafc;
+          padding: 12px 20px;
+          border-bottom: 1px solid #e2e8f0;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+      }
+      .details-content {
+          padding: 20px;
+          overflow-y: auto;
+          height: calc(100% - 60px);
+      }
+      .close-btn {
+          background: none;
+          border: none;
+          font-size: 18px;
+          cursor: pointer;
+          color: #4a5568;
+      }
+      .code-block {
+          background-color: #f7fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 4px;
+          padding: 12px;
+          margin: 8px 0;
+          font-family: 'Monaco', 'Menlo', monospace;
+          font-size: 12px;
+          overflow-x: auto;
+      }
+      .section-title {
+          font-weight: 600;
+          color: #2d3748;
+          margin: 16px 0 8px 0;
+      }
+      .network-logs {
+          background-color: #f8f9fa;
+          color: #2d3748;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          font-size: 12px;
+          height: 300px;
+          overflow-y: auto;
+          border: 1px solid #e2e8f0;
+          border-radius: 4px;
+          padding: 10px;
+          margin: 10px 0;
+      }
+      .network-entry {
+          margin: 8px 0;
+          padding: 12px;
+          border: 1px solid #e2e8f0;
+          border-radius: 4px;
+          background-color: white;
+      }
+      .network-entry:hover {
+          background-color: #f7fafc;
+          cursor: pointer;
+      }
+      .network-entry.expanded {
+          background-color: #ebf8ff;
+          border-color: #e535ab;
+      }
+      .network-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 8px;
+      }
+      .network-method {
+          background-color: #e535ab;
+          color: white;
+          padding: 2px 8px;
+          border-radius: 4px;
+          font-size: 11px;
+          font-weight: 600;
+      }
+      .network-url {
+          font-size: 12px;
+          color: #2d3748;
+          font-weight: 500;
+          flex: 1;
+          margin: 0 10px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+      }
+      .network-status {
+          font-size: 11px;
+          font-weight: 500;
+      }
+      .network-details {
+          font-size: 11px;
+          color: #718096;
+          display: flex;
+          gap: 15px;
+          margin-bottom: 8px;
+      }
+      .network-body {
+          display: none;
+          margin-top: 12px;
+          padding-top: 12px;
+          border-top: 1px solid #e2e8f0;
+      }
+      .network-body.expanded {
+          display: block;
+      }
+      .network-section {
+          margin-bottom: 12px;
+      }
+      .network-section-title {
+          font-weight: 600;
+          color: #2d3748;
+          margin-bottom: 4px;
+          font-size: 11px;
+      }
+      .network-section-content {
+          background-color: #f7fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 4px;
+          padding: 8px;
+          font-family: 'Monaco', 'Menlo', monospace;
+          font-size: 10px;
+          overflow-x: auto;
+          max-height: 150px;
+          overflow-y: auto;
+      }
+      .logs-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin: 10px 0 5px 0;
+      }
+      .logs-title {
+          font-weight: 600;
+          color: #2d3748;
+      }
+      .clear-logs-btn {
+          background-color: #6b7280;
+          color: white;
+          border: none;
+          padding: 4px 8px;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 11px;
+      }
+      .clear-logs-btn:hover {
+          background-color: #4b5563;
+      }
+    </style>
   </head>
   <body>
     <div class="header">
       <div class="logo">GraphQL Inspector</div>
-      <div class="subtitle">DevTools Panel</div>
+      <div class="controls">
+        <button class="btn btn-secondary" id="clearBtn">Clear</button>
+        <button class="btn" id="refreshBtn">Refresh</button>
+        <button class="btn btn-secondary" id="testBtn">Test Data</button>
+      </div>
     </div>
-    
+      
+    <div class="filters">
+      <div class="filter-group">
+        <label>Filter URL:</label>
+        <input type="text" class="filter-input" id="urlFilter" placeholder="Enter URL pattern...">
+      </div>
+      <div class="filter-group">
+        <label>Status:</label>
+        <select class="filter-input" id="statusFilter">
+          <option value="">All</option>
+          <option value="2">Success (2xx)</option>
+          <option value="4">Client Error (4xx)</option>
+          <option value="5">Server Error (5xx)</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Request Count:</label>
+        <span id="requestCount">0</span>
+      </div>
+    </div>
+      
     <div class="content">
-      <div class="info-box">
-        <h3>Welcome to GraphQL Inspector!</h3>
-        <p>This panel will help you identify and analyze GraphQL requests.</p>
-        <p>Future features will include:</p>
-        <ul>
-          <li>Real-time GraphQL request detection</li>
-          <li>Request highlighting based on custom keys</li>
-          <li>Detailed request/response analysis</li>
-          <li>Query performance metrics</li>
-        </ul>
+      <div class="requests-container" id="requestsContainer">
+        <div class="empty-state" id="emptyState">
+          <div class="empty-state-icon">🔍</div>
+          <h3>No GraphQL requests detected</h3>
+          <p>Navigate to a page that makes GraphQL requests to see them here.</p>
+        </div>
       </div>
-        
-      <div class="placeholder">
-        GraphQL request monitoring will be implemented here...
+      
+      <div class="logs-header">
+        <div class="logs-title">Network Activity</div>
+        <button class="clear-logs-btn" id="clearLogsBtn">Clear</button>
+      </div>
+      <div class="network-logs" id="networkLogs">
+        <div class="network-entry">
+          <div class="network-header">
+            <span class="network-method">GET</span>
+            <span class="network-url">Waiting for network activity...</span>
+            <span class="network-status status-success">--</span>
+          </div>
+          <div class="network-details">
+            <span>Time: --</span>
+            <span>Duration: --</span>
+            <span>Type: --</span>
+          </div>
+        </div>
       </div>
     </div>
-    
+      
+    <div class="details-panel" id="detailsPanel">
+        <div class="details-header">
+          <h3>Request Details</h3>
+          <button class="close-btn" id="closeDetailsBtn">×</button>
+        </div>
+        <div class="details-content" id="detailsContent">
+          <!-- Details will be populated here -->
+        </div>
+    </div>
+      
     <script src="panel.js"></script>
   </body>
 </html>

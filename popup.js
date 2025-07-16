@@ -48,11 +48,13 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function openDevtools() {
-    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-      chrome.tabs.sendMessage(tabs[0].id, {
-          action: 'openDevtools'
-      });
-    });
+    // Show instruction message to user
+    showStatus('Open DevTools (F12) and navigate to the "GraphQL Inspector" tab', 'success');
+    
+    // Close the popup after showing the message
+    setTimeout(() => {
+      window.close();
+    }, 2000);
   }
 
   function showStatus(message, type) {
