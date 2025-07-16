@@ -185,6 +185,7 @@ function showRequestDetails(request) {
 // Generate HTML for request details
 function generateRequestDetailsHTML(request) {
   const requestBody = formatJSON(request.requestBody);
+  const requestPayload = formatPayloadOnly(request.requestBody);
   const responseBody = formatJSON(request.responseBody);
   
   return `
@@ -202,7 +203,12 @@ function generateRequestDetailsHTML(request) {
       ${formatHeaders(request.requestHeaders)}
     </div>
     
-    <div class="section-title">Request Body</div>
+    <div class="section-title">Request Payload</div>
+    <div class="code-block">
+      ${requestPayload}
+    </div>
+    
+    <div class="section-title">Full Request Body</div>
     <div class="code-block">
       ${requestBody}
     </div>
@@ -226,6 +232,137 @@ function formatJSON(jsonString) {
   try {
     const parsed = JSON.parse(jsonString);
     return JSON.stringify(parsed, null, 2);
+  } catch (e) {
+    return jsonString;
+  }
+}
+
+// Extract endpoint from fetchAPI payload
+function extractEndpointFromPayload(jsonString) {
+  if (!jsonString) return null;
+  
+  try {
+    const parsed = JSON.parse(jsonString);
+    
+    // Try to extract payload from various possible paths
+    let payload = null;
+    
+    // Check for payload in variables.input.payload (common pattern)
+    if (parsed.variables && parsed.variables.input && parsed.variables.input.payload) {
+      payload = parsed.variables.input.payload;
+    }
+    // Check for payload directly in variables.payload
+    else if (parsed.variables && parsed.variables.payload) {
+      payload = parsed.variables.payload;
+    }
+    // Check for payload in root level
+    else if (parsed.payload) {
+      payload = parsed.payload;
+    }
+    
+    if (payload && payload.call && payload.call.functionKey === 'fetchAPI') {
+      // Extract endpoint from payload.call.payload.endpoint
+      if (payload.call.payload && payload.call.payload.endpoint) {
+        return payload.call.payload.endpoint;
+      }
+    }
+    // Also check if functionKey is directly in payload
+    else if (payload && payload.functionKey === 'fetchAPI') {
+      if (payload.payload && payload.payload.endpoint) {
+        return payload.payload.endpoint;
+      }
+    }
+    
+    return null;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Extract functionKey from payload
+function extractFunctionKeyFromPayload(jsonString) {
+  if (!jsonString) return null;
+  
+  try {
+    const parsed = JSON.parse(jsonString);
+    
+    // Try to extract payload from various possible paths
+    let payload = null;
+    
+    // Check for payload in variables.input.payload (common pattern)
+    if (parsed.variables && parsed.variables.input && parsed.variables.input.payload) {
+      payload = parsed.variables.input.payload;
+    }
+    // Check for payload directly in variables.payload
+    else if (parsed.variables && parsed.variables.payload) {
+      payload = parsed.variables.payload;
+    }
+    // Check for payload in root level
+    else if (parsed.payload) {
+      payload = parsed.payload;
+    }
+    
+    if (payload && payload.call && payload.call.functionKey) {
+      return payload.call.functionKey;
+    }
+    // Also check if functionKey is directly in payload
+    else if (payload && payload.functionKey) {
+      return payload.functionKey;
+    }
+    
+    return null;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Extract and format only the payload from GraphQL request body
+function formatPayloadOnly(jsonString) {
+  if (!jsonString) return 'No payload found';
+  
+  try {
+    const parsed = JSON.parse(jsonString);
+    
+    // Try to extract payload from various possible paths
+    let payload = null;
+    
+    // Check for payload in variables.input.payload (common pattern)
+    if (parsed.variables && parsed.variables.input && parsed.variables.input.payload) {
+      payload = parsed.variables.input.payload;
+    }
+    // Check for payload directly in variables.payload
+    else if (parsed.variables && parsed.variables.payload) {
+      payload = parsed.variables.payload;
+    }
+    // Check for payload in root level
+    else if (parsed.payload) {
+      payload = parsed.payload;
+    }
+    
+    if (payload) {
+      // Extract only functionKey and payload from the call object
+      if (payload.call && payload.call.functionKey) {
+        const simplifiedPayload = {
+          functionKey: payload.call.functionKey,
+          payload: payload.call.payload || {}
+        };
+        return JSON.stringify(simplifiedPayload, null, 2);
+      }
+      // If no call object, try to extract functionKey directly
+      else if (payload.functionKey) {
+        const simplifiedPayload = {
+          functionKey: payload.functionKey,
+          payload: payload.payload || {}
+        };
+        return JSON.stringify(simplifiedPayload, null, 2);
+      }
+      // If no functionKey found, return the full payload
+      else {
+        return JSON.stringify(payload, null, 2);
+      }
+    } else {
+      return 'No payload found in request body';
+    }
   } catch (e) {
     return jsonString;
   }
@@ -372,17 +509,23 @@ function updateNetworkLogs() {
     const statusClass = entry.status >= 200 && entry.status < 300 ? 'status-success' : 'status-error';
     const displayType = entry.operationType || entry.type;
     
+    // Extract endpoint and functionKey for requests
+    const endpoint = extractEndpointFromPayload(entry.requestBody);
+    const functionKey = extractFunctionKeyFromPayload(entry.requestBody);
+    const displayUrl = endpoint ? endpoint : entry.url;
+    const urlWithFunctionKey = functionKey ? `${displayUrl} [${functionKey}]` : displayUrl;
+    
     networkDiv.innerHTML = `
-        <div class="network-header">
-          <span class="network-method">${entry.method}</span>
-          <span class="network-url">${entry.url}</span>
-          <span class="network-status ${statusClass}">${entry.status} ${entry.statusText}</span>
-        </div>
-        <div class="network-details">
-          <span>Time: ${new Date(entry.time).toLocaleTimeString()}</span>
-          <span>Duration: ${Math.round(entry.duration)}ms</span>
-          <span>Type: ${displayType}</span>
-        </div>
+      <div class="network-header">
+        <span class="network-method">${entry.method}</span>
+        <span class="network-url">${urlWithFunctionKey}</span>
+        <span class="network-status ${statusClass}">${entry.status} ${entry.statusText}</span>
+      </div>
+      <div class="network-details">
+        <span>Time: ${new Date(entry.time).toLocaleTimeString()}</span>
+        <span>Duration: ${Math.round(entry.duration)}ms</span>
+        <span>Type: ${displayType}</span>
+      </div>
     `;
     
     networkLogs.appendChild(networkDiv);
