@@ -45,7 +45,7 @@ function getOperationType(content) {
   return 'GraphQL';
 }
 
-function addGraphQLRequest(request, content) {
+function addGraphQLRequest(request, requestBody) {
   const graphqlRequest = {
     id: Date.now() + Math.random(),
     url: request.request.url,
@@ -54,12 +54,14 @@ function addGraphQLRequest(request, content) {
     statusText: request.response.statusText || 'Unknown',
     time: new Date().toISOString(),
     duration: request.time || 0,
-    requestBody: content,
+    requestBody: requestBody,
     requestHeaders: request.request.headers || [],
     responseHeaders: request.response.headers || [],
     responseBody: '',
-    operationType: getOperationType(content)
+    operationType: getOperationType(requestBody)
   };
+  
+  // Get response content using getContent (this is correct for response)
   if (request.getContent) {
     request.getContent(function(responseContent) {
       graphqlRequest.responseBody = responseContent || '';
@@ -68,6 +70,7 @@ function addGraphQLRequest(request, content) {
       }
     });
   }
+  
   graphqlRequests.push(graphqlRequest);
   if (graphqlRequests.length > 100) graphqlRequests.shift();
   if (panelWindow && panelWindow.updateRequests) {
@@ -112,39 +115,39 @@ function setupNetworkMonitoring() {
       operationType: 'Network Request'
     };
     
-    // Get request content
-    request.getContent(function(content) {
-      networkData.requestBody = content || '';
+    // Get request body from request.request.postData
+    if (request.request.postData) {
+      networkData.requestBody = request.request.postData.text || '';
+    }
+    
+    // Check if it's a GraphQL request
+    if (isGraphQLRequest(request)) {
+      console.log('✅ GraphQL request detected:', request.request.url);
+      networkData.type = 'GraphQL';
+      networkData.operationType = getOperationType(networkData.requestBody);
       
-      // Check if it's a GraphQL request
-      if (isGraphQLRequest(request)) {
-        console.log('✅ GraphQL request detected:', request.request.url);
-        networkData.type = 'GraphQL';
-        networkData.operationType = getOperationType(content);
-        
-        if (isGraphQLRequestBody(content)) {
-          console.log('📝 GraphQL request body confirmed, adding to list');
-          addGraphQLRequest(request, content);
-        }
+      if (isGraphQLRequestBody(networkData.requestBody)) {
+        console.log('📝 GraphQL request body confirmed, adding to list');
+        addGraphQLRequest(request, networkData.requestBody);
       }
-      
-      // Get response content
-      if (request.getContent) {
-        request.getContent(function(responseContent) {
-          networkData.responseBody = responseContent || '';
-          
-          // Send to panel
-          if (panelWindow && panelWindow.addNetworkEntry) {
-            panelWindow.addNetworkEntry(networkData);
-          }
-        });
-      } else {
-        // Send to panel without response content
+    }
+    
+    // Get response content
+    if (request.getContent) {
+      request.getContent(function(responseContent) {
+        networkData.responseBody = responseContent || '';
+        
+        // Send to panel
         if (panelWindow && panelWindow.addNetworkEntry) {
           panelWindow.addNetworkEntry(networkData);
         }
+      });
+    } else {
+      // Send to panel without response content
+      if (panelWindow && panelWindow.addNetworkEntry) {
+        panelWindow.addNetworkEntry(networkData);
       }
-    });
+    }
   });
   
   console.log('✅ Network monitoring setup complete');

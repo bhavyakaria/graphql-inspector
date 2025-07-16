@@ -219,6 +219,10 @@
           background-color: #ebf8ff;
           border-color: #e535ab;
       }
+      .network-entry.selected {
+          background-color: #ebf8ff;
+          border-left: 4px solid #e535ab;
+      }
       .network-header {
           display: flex;
           justify-content: space-between;
@@ -253,35 +257,6 @@
           display: flex;
           gap: 15px;
           margin-bottom: 8px;
-      }
-      .network-body {
-          display: none;
-          margin-top: 12px;
-          padding-top: 12px;
-          border-top: 1px solid #e2e8f0;
-      }
-      .network-body.expanded {
-          display: block;
-      }
-      .network-section {
-          margin-bottom: 12px;
-      }
-      .network-section-title {
-          font-weight: 600;
-          color: #2d3748;
-          margin-bottom: 4px;
-          font-size: 11px;
-      }
-      .network-section-content {
-          background-color: #f7fafc;
-          border: 1px solid #e2e8f0;
-          border-radius: 4px;
-          padding: 8px;
-          font-family: 'Monaco', 'Menlo', monospace;
-          font-size: 10px;
-          overflow-x: auto;
-          max-height: 150px;
-          overflow-y: auto;
       }
       .logs-header {
           display: flex;
@@ -353,8 +328,8 @@
       <div class="network-logs" id="networkLogs">
         <div class="network-entry">
           <div class="network-header">
-            <span class="network-method">GET</span>
-            <span class="network-url">Waiting for network activity...</span>
+            <span class="network-method">POST</span>
+            <span class="network-url">Waiting for GraphQL requests...</span>
             <span class="network-status status-success">--</span>
           </div>
           <div class="network-details">

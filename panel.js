@@ -21,7 +21,6 @@ const networkLogs = document.getElementById('networkLogs');
 const clearLogsBtn = document.getElementById('clearLogsBtn');
 
 let networkLogEntries = [];
-let expandedNetworkEntry = null;
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
@@ -245,8 +244,11 @@ function closeDetails() {
     requestsContainer.style.width = '100%';
     selectedRequest = null;
     
-    // Remove selection
+    // Remove selection from both request items and network entries
     document.querySelectorAll('.request-item').forEach(item => {
+        item.classList.remove('selected');
+    });
+    document.querySelectorAll('.network-entry').forEach(item => {
         item.classList.remove('selected');
     });
 }
@@ -341,12 +343,15 @@ function updateNetworkLogs() {
     
     networkLogs.innerHTML = '';
     
-    if (networkLogEntries.length === 0) {
+    // Filter to show only GraphQL requests
+    const graphqlNetworkEntries = networkLogEntries.filter(entry => entry.type === 'GraphQL');
+    
+    if (graphqlNetworkEntries.length === 0) {
         networkLogs.innerHTML = `
             <div class="network-entry">
                 <div class="network-header">
-                    <span class="network-method">GET</span>
-                    <span class="network-url">Waiting for network activity...</span>
+                    <span class="network-method">POST</span>
+                    <span class="network-url">Waiting for GraphQL requests...</span>
                     <span class="network-status status-success">--</span>
                 </div>
                 <div class="network-details">
@@ -359,7 +364,7 @@ function updateNetworkLogs() {
         return;
     }
     
-    networkLogEntries.forEach(entry => {
+    graphqlNetworkEntries.forEach(entry => {
         const networkDiv = document.createElement('div');
         networkDiv.className = 'network-entry';
         networkDiv.onclick = () => toggleNetworkDetails(entry.id, networkDiv);
@@ -378,32 +383,6 @@ function updateNetworkLogs() {
                 <span>Duration: ${Math.round(entry.duration)}ms</span>
                 <span>Type: ${displayType}</span>
             </div>
-            <div class="network-body" id="network-body-${entry.id}">
-                <div class="network-section">
-                    <div class="network-section-title">Request Headers</div>
-                    <div class="network-section-content">
-                        ${formatNetworkHeaders(entry.requestHeaders)}
-                    </div>
-                </div>
-                <div class="network-section">
-                    <div class="network-section-title">Request Body</div>
-                    <div class="network-section-content">
-                        ${formatNetworkJSON(entry.requestBody)}
-                    </div>
-                </div>
-                <div class="network-section">
-                    <div class="network-section-title">Response Headers</div>
-                    <div class="network-section-content">
-                        ${formatNetworkHeaders(entry.responseHeaders)}
-                    </div>
-                </div>
-                <div class="network-section">
-                    <div class="network-section-title">Response Body</div>
-                    <div class="network-section-content">
-                        ${formatNetworkJSON(entry.responseBody)}
-                    </div>
-                </div>
-            </div>
         `;
         
         networkLogs.appendChild(networkDiv);
@@ -414,26 +393,34 @@ function updateNetworkLogs() {
 }
 
 function toggleNetworkDetails(entryId, networkDiv) {
-    const bodyElement = document.getElementById(`network-body-${entryId}`);
+    const entry = networkLogEntries.find(e => e.id === entryId);
+    if (!entry) return;
     
-    if (expandedNetworkEntry === entryId) {
-        // Collapse
-        bodyElement.classList.remove('expanded');
-        networkDiv.classList.remove('expanded');
-        expandedNetworkEntry = null;
-    } else {
-        // Collapse any previously expanded entry
-        if (expandedNetworkEntry) {
-            const prevBody = document.getElementById(`network-body-${expandedNetworkEntry}`);
-            const prevDiv = prevBody?.parentElement;
-            if (prevBody) prevBody.classList.remove('expanded');
-            if (prevDiv) prevDiv.classList.remove('expanded');
-        }
+    // Only show GraphQL requests in the details panel
+    if (entry.type === 'GraphQL') {
+        // Convert network entry to GraphQL request format for details panel
+        const graphqlRequest = {
+            id: entry.id,
+            url: entry.url,
+            method: entry.method,
+            status: entry.status,
+            statusText: entry.statusText,
+            time: entry.time,
+            duration: entry.duration,
+            requestBody: entry.requestBody,
+            requestHeaders: entry.requestHeaders,
+            responseHeaders: entry.responseHeaders,
+            responseBody: entry.responseBody,
+            operationType: entry.operationType
+        };
         
-        // Expand current entry
-        bodyElement.classList.add('expanded');
-        networkDiv.classList.add('expanded');
-        expandedNetworkEntry = entryId;
+        showRequestDetails(graphqlRequest);
+        
+        // Update selection state for network entries
+        document.querySelectorAll('.network-entry').forEach(item => {
+            item.classList.remove('selected');
+        });
+        networkDiv.classList.add('selected');
     }
 }
 
@@ -456,7 +443,6 @@ function formatNetworkJSON(jsonString) {
 
 function clearNetworkLogs() {
     networkLogEntries = [];
-    expandedNetworkEntry = null;
     updateNetworkLogs();
 }
 
@@ -466,6 +452,7 @@ window.addNetworkEntry = addNetworkEntry;
 // Function to add navigation events
 function addNavigationEntry(url) {
     const navigationEntry = {
+        id: Date.now() + Math.random(),
         url: url,
         method: 'NAVIGATE',
         status: 200,
