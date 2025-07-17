@@ -79,6 +79,12 @@
           display: flex;
           flex-direction: column;
       }
+      .network-section {
+          flex-shrink: 0;
+          background-color: white;
+          border-top: 1px solid #e2e8f0;
+          padding: 0 20px;
+      }
       .requests-container {
           flex: 1;
           overflow-y: auto;
@@ -202,7 +208,7 @@
           border: 1px solid #e2e8f0;
           border-radius: 4px;
           padding: 10px;
-          margin: 10px 0;
+          margin: 10px 0 20px 0;
       }
       .network-entry {
           margin: 8px 0;
@@ -320,7 +326,9 @@
           <p>Navigate to a page that makes GraphQL requests to see them here.</p>
         </div>
       </div>
-      
+    </div>
+    
+    <div class="network-section">
       <div class="logs-header">
         <div class="logs-title">Network Activity</div>
         <button class="clear-logs-btn" id="clearLogsBtn">Clear</button>
