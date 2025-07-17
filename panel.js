@@ -8,9 +8,6 @@ let filteredRequests = [];
 // DOM elements
 const requestsContainer = document.getElementById('requestsContainer');
 const emptyState = document.getElementById('emptyState');
-const clearBtn = document.getElementById('clearBtn');
-const refreshBtn = document.getElementById('refreshBtn');
-const testBtn = document.getElementById('testBtn');
 const urlFilter = document.getElementById('urlFilter');
 const statusFilter = document.getElementById('statusFilter');
 const requestCount = document.getElementById('requestCount');
@@ -27,9 +24,6 @@ document.addEventListener('DOMContentLoaded', function() {
   console.log('GraphQL Inspector panel loaded and ready');
   
   // Event listeners
-  clearBtn.addEventListener('click', clearRequests);
-  refreshBtn.addEventListener('click', refreshRequests);
-  testBtn.addEventListener('click', injectTestData);
   urlFilter.addEventListener('input', filterRequests);
   statusFilter.addEventListener('change', filterRequests);
   closeDetailsBtn.addEventListener('click', closeDetails);
