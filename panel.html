@@ -20,6 +20,16 @@
         justify-content: space-between;
         align-items: center;
         border-bottom: 1px solid #4a5568;
+        gap: 20px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+      .header-filters {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        margin-left: 30px;
       }
       .logo {
         font-size: 16px;
@@ -65,7 +75,7 @@
       .filter-group label {
         font-size: 12px;
         font-weight: 500;
-        color: #4a5568;
+        color: #fff;
       }
       .filter-input {
         border: 1px solid #cbd5e0;
@@ -291,33 +301,30 @@
   <body>
     <div class="header">
       <div class="logo">GraphQL Inspector</div>
+      <div class="header-filters">
+        <div class="filter-group">
+          <label>Filter URL:</label>
+          <input type="text" class="filter-input" id="urlFilter" placeholder="Enter URL pattern...">
+        </div>
+        <div class="filter-group">
+          <label>Status:</label>
+          <select class="filter-input" id="statusFilter">
+            <option value="">All</option>
+            <option value="2">Success (2xx)</option>
+            <option value="4">Client Error (4xx)</option>
+            <option value="5">Server Error (5xx)</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Request Count:</label>
+          <span id="requestCount">0</span>
+        </div>
+      </div>
       <div class="controls">
         <button class="btn bg-white" id="clearLogsBtn">Clear</button>
-        <!-- <button class="clear-logs-btn" id="clearLogsBtn">Clear</button> -->
       </div>
     </div>
-      
-    <div class="filters">
-      <div class="filter-group">
-        <label>Filter URL:</label>
-        <input type="text" class="filter-input" id="urlFilter" placeholder="Enter URL pattern...">
-      </div>
-      <div class="filter-group">
-        <label>Status:</label>
-        <select class="filter-input" id="statusFilter">
-          <option value="">All</option>
-          <option value="2">Success (2xx)</option>
-          <option value="4">Client Error (4xx)</option>
-          <option value="5">Server Error (5xx)</option>
-        </select>
-      </div>
-      <div class="filter-group">
-        <label>Request Count:</label>
-        <span id="requestCount">0</span>
-      </div>
-    </div>
-      
-    <div class="content">
+    <!-- <div class="content">
       <div class="requests-container" id="requestsContainer">
         <div class="empty-state" id="emptyState">
           <div class="empty-state-icon">🔍</div>
@@ -325,12 +332,9 @@
           <p>Navigate to a page that makes GraphQL requests to see them here.</p>
         </div>
       </div>
-    </div>
+    </div> -->
     
     <div class="network-section">
-      <div class="logs-header">
-        <div class="logs-title">Network Activity</div>
-      </div>
       <div class="network-logs" id="networkLogs">
         <div class="network-entry">
           <div class="network-header">

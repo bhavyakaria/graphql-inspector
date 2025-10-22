@@ -6,8 +6,8 @@ let selectedRequest = null;
 let filteredRequests = [];
 
 // DOM elements
-const requestsContainer = document.getElementById('requestsContainer');
-const emptyState = document.getElementById('emptyState');
+// const requestsContainer = document.getElementById('requestsContainer');
+// const emptyState = document.getElementById('emptyState');
 const urlFilter = document.getElementById('urlFilter');
 const statusFilter = document.getElementById('statusFilter');
 const requestCount = document.getElementById('requestCount');
@@ -75,26 +75,24 @@ function filterRequests() {
 
 // Update the display
 function updateDisplay() {
-    requestCount.textContent = filteredRequests.length;
-    
-    if (filteredRequests.length === 0) {
-        emptyState.style.display = 'block';
-        requestsContainer.innerHTML = '';
-        requestsContainer.appendChild(emptyState);
-    } else {
-        emptyState.style.display = 'none';
-        renderRequests();
-    }
+  requestCount.textContent = filteredRequests.length;
+  
+  // Always hide the empty state in the main container and use network logs instead
+  // emptyState.style.display = 'none';
+  // requestsContainer.innerHTML = '';
+  
+  // Update network logs with all requests (both from currentRequests and networkLogEntries)
+  updateNetworkLogs();
 }
 
 // Render requests list
 function renderRequests() {
-    requestsContainer.innerHTML = '';
-    
-    filteredRequests.forEach(request => {
-        const requestElement = createRequestElement(request);
-        requestsContainer.appendChild(requestElement);
-    });
+  // requestsContainer.innerHTML = '';
+  
+  // filteredRequests.forEach(request => {
+  //     const requestElement = createRequestElement(request);
+  //     requestsContainer.appendChild(requestElement);
+  // });
 }
 
 // Create a request element
@@ -105,10 +103,16 @@ function createRequestElement(request) {
   
   const statusClass = request.status >= 200 && request.status < 300 ? 'status-success' : 'status-error';
   
+  // Extract endpoint and functionKey for requests (same logic as network logs)
+  const endpoint = extractEndpointFromPayload(request.requestBody);
+  const functionKey = extractFunctionKeyFromPayload(request.requestBody);
+  const displayUrl = endpoint ? endpoint : request.url;
+  const urlWithFunctionKey = functionKey ? `${displayUrl} [${functionKey}]` : displayUrl;
+  
   div.innerHTML = `
       <div class="request-header">
           <span class="request-method">${request.method}</span>
-          <span class="request-url">${request.url}</span>
+          <span class="request-url">${urlWithFunctionKey}</span>
           <span class="request-status ${statusClass}">${request.status} ${request.statusText}</span>
       </div>
       <div class="request-details">
@@ -173,7 +177,7 @@ function selectRequest(request) {
 function showRequestDetails(request) {
   detailsContent.innerHTML = generateRequestDetailsHTML(request);
   detailsPanel.style.display = 'block';
-  requestsContainer.style.width = '50%';
+  // requestsContainer.style.width = '50%';
 }
 
 // Generate HTML for request details
@@ -372,7 +376,7 @@ function formatHeaders(headers) {
 // Close details panel
 function closeDetails() {
   detailsPanel.style.display = 'none';
-  requestsContainer.style.width = '100%';
+  // requestsContainer.style.width = '100%';
   selectedRequest = null;
   
   // Remove selection from both request items and network entries
@@ -471,13 +475,17 @@ function addNetworkEntry(networkData) {
 
 function updateNetworkLogs() {
   if (!networkLogs) return;
-  
   networkLogs.innerHTML = '';
+
+  // Combine filtered requests and network entries, remove duplicates
+  const allEntries = [...filteredRequests, ...networkLogEntries.filter(entry => entry.type === 'GraphQL')];
   
-  // Filter to show only GraphQL requests
-  const graphqlNetworkEntries = networkLogEntries.filter(entry => entry.type === 'GraphQL');
-  
-  if (graphqlNetworkEntries.length === 0) {
+  // Remove duplicates based on URL and time
+  const uniqueEntries = allEntries.filter((entry, index, self) => 
+    index === self.findIndex(e => e.url === entry.url && e.time === entry.time)
+  );
+
+  if (uniqueEntries.length === 0) {
     networkLogs.innerHTML = `
       <div class="network-entry">
         <div class="network-header">
@@ -494,21 +502,25 @@ function updateNetworkLogs() {
     `;
     return;
   }
-  
-  graphqlNetworkEntries.forEach(entry => {
+
+  // Sort by time (newest first)
+  uniqueEntries.sort((a, b) => new Date(b.time) - new Date(a.time));
+
+  // Only add the updated URL network logs
+  uniqueEntries.forEach(entry => {
     const networkDiv = document.createElement('div');
     networkDiv.className = 'network-entry';
     networkDiv.onclick = () => toggleNetworkDetails(entry.id, networkDiv);
-    
+
     const statusClass = entry.status >= 200 && entry.status < 300 ? 'status-success' : 'status-error';
-    const displayType = entry.operationType || entry.type;
-    
+    const displayType = entry.operationType || entry.type || getRequestType(entry);
+
     // Extract endpoint and functionKey for requests
     const endpoint = extractEndpointFromPayload(entry.requestBody);
     const functionKey = extractFunctionKeyFromPayload(entry.requestBody);
     const displayUrl = endpoint ? endpoint : entry.url;
     const urlWithFunctionKey = functionKey ? `${displayUrl} [${functionKey}]` : displayUrl;
-    
+
     networkDiv.innerHTML = `
       <div class="network-header">
         <span class="network-method">${entry.method}</span>
@@ -521,10 +533,10 @@ function updateNetworkLogs() {
         <span>Type: ${displayType}</span>
       </div>
     `;
-    
+
     networkLogs.appendChild(networkDiv);
   });
-  
+
   // Auto-scroll to bottom
   networkLogs.scrollTop = networkLogs.scrollHeight;
 }
@@ -579,8 +591,12 @@ function formatNetworkJSON(jsonString) {
 }
 
 function clearNetworkLogs() {
+  // Clear both network entries and current requests since we're using one component
   networkLogEntries = [];
-  updateNetworkLogs();
+  currentRequests = [];
+  filteredRequests = [];
+  updateDisplay();
+  closeDetails();
 }
 
 // Function to be called from devtools.js to add network entries
